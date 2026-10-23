@@ -1,0 +1,691 @@
+l<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>TvTech Player</title>
+  <style>
+    :root {
+      --bg: #060913;
+      --card: #10172d;
+      --card-hover: #192342;
+      --primary: #2563eb;
+      --primary-glow: rgba(37, 99, 235, 0.4);
+      --accent-live: #ef4444;
+      --accent-vod: #8b5cf6;
+      --accent-series: #10b981;
+      --accent-fav: #f59e0b;
+      --text: #ffffff;
+      --text-muted: #94a3b8;
+      --border: rgba(59, 130, 246, 0.25);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background-image: radial-gradient(circle at 50% 0%, #111e38 0%, #060913 70%);
+    }
+
+    /* Topo Fixo */
+    header {
+      height: 65px;
+      padding: 0 20px;
+      background: rgba(10, 15, 30, 0.95);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+    }
+
+    .brand {
+      font-weight: 900;
+      font-size: 1.25rem;
+      color: #60a5fa;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: 0.5px;
+      text-shadow: 0 0 15px rgba(96, 165, 250, 0.5);
+    }
+
+    .brand span {
+      color: #fff;
+      font-weight: 400;
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+
+    .header-btns {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      background: var(--card);
+      color: #fff;
+      border: 1px solid var(--border);
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      border-color: #3b82f6;
+      box-shadow: 0 0 15px var(--primary-glow);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #059669, #047857);
+      border-color: #10b981;
+    }
+
+    /* Contêiner de Telas */
+    main {
+      flex: 1;
+      position: relative;
+      overflow-y: auto;
+    }
+
+    .screen {
+      display: none;
+      width: 100%;
+      min-height: 100%;
+      padding: 20px;
+      flex-direction: column;
+    }
+
+    .screen.active {
+      display: flex !important;
+    }
+
+    /* Tela 1: Início */
+    .hero-banner {
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(139, 92, 246, 0.15));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 20px;
+      box-shadow: inset 0 0 20px rgba(37, 99, 235, 0.1);
+    }
+
+    .hero-banner h1 {
+      font-size: 1.4rem;
+      color: #60a5fa;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .hero-banner p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .home-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      max-width: 700px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    @media (min-width: 600px) {
+      .home-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .nav-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .nav-card:hover, .nav-card:active {
+      background: var(--card-hover);
+      border-color: #3b82f6;
+      transform: translateY(-2px);
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    }
+
+    .nav-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      border-radius: 14px 14px 0 0;
+    }
+
+    .nav-card.live::before { background: var(--accent-live); box-shadow: 0 0 10px var(--accent-live); }
+    .nav-card.vod::before { background: var(--accent-vod); box-shadow: 0 0 10px var(--accent-vod); }
+    .nav-card.series::before { background: var(--accent-series); box-shadow: 0 0 10px var(--accent-series); }
+    .nav-card.fav::before { background: var(--accent-fav); box-shadow: 0 0 10px var(--accent-fav); }
+    .nav-card.add::before { background: var(--primary); box-shadow: 0 0 10px var(--primary); }
+
+    .nav-card .icon {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+
+    .nav-card h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      text-align: center;
+    }
+
+    .nav-card span {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    /* Tela 2: Adicionar Lista */
+    .form-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 600px;
+      margin: 0 auto;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-group label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .input-field {
+      background: #060913;
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      width: 100%;
+    }
+
+    .input-field:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+    }
+
+    textarea.input-field {
+      height: 110px;
+      resize: vertical;
+      font-family: monospace;
+      font-size: 0.8rem;
+    }
+
+    /* Tela 3: TV ao Vivo */
+    #screen-live {
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .live-layout {
+      display: flex;
+      height: 100%;
+      width: 100%;
+    }
+
+    .channel-column {
+      width: 40%;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      background: #0a0f1e;
+    }
+
+    .column-title {
+      padding: 14px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      background: #060913;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      text-transform: uppercase;
+    }
+
+    .channel-list {
+      flex: 1;
+      overflow-y: auto;
+      list-style: none;
+    }
+
+    .channel-item {
+      padding: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+    }
+
+    .channel-item:hover, .channel-item.active {
+      background: var(--card-hover);
+      border-left: 4px solid var(--primary);
+    }
+
+    .player-column {
+      width: 60%;
+      display: flex;
+      flex-direction: column;
+      background: #000;
+    }
+
+    .video-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .video-info {
+      padding: 14px;
+      background: #0a0f1e;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Grid VOD */
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .media-card {
+      background: var(--card);
+      border-radius: 10px;
+      aspect-ratio: 2/3;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      cursor: pointer;
+    }
+
+    .media-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .media-card-title {
+      position: absolute;
+      bottom: 0;
+      inset-inline: 0;
+      padding: 25px 8px 8px;
+      background: linear-gradient(0deg, #000 0%, transparent 100%);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    @media (max-width: 650px) {
+      .live-layout {
+        flex-direction: column-reverse;
+      }
+      .channel-column {
+        width: 100%;
+        height: 55%;
+      }
+      .player-column {
+        width: 100%;
+        height: 45%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Topo -->
+  <header>
+    <div class="brand">📺 TVTECH <span>PLAYER</span></div>
+    <div class="header-btns">
+      <button class="btn" id="btn-top-home">🏠 Início</button>
+      <button class="btn btn-primary" id="btn-top-add">➕ Adicionar</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- TELA 1: INÍCIO -->
+    <section id="screen-home" class="screen active">
+      <div class="hero-banner">
+        <h1>Sua TV, do seu jeito!</h1>
+        <p>Moderno, simples, rápido e prático em um só lugar.</p>
+      </div>
+
+      <div class="home-grid">
+        <div class="nav-card live" id="card-to-live">
+          <div class="icon">📡</div>
+          <h2>TV AO VIVO</h2>
+          <span id="cnt-live">0 canais</span>
+        </div>
+        <div class="nav-card vod" id="card-to-vod">
+          <div class="icon">🎬</div>
+          <h2>FILMES</h2>
+          <span id="cnt-vod">0 títulos</span>
+        </div>
+        <div class="nav-card series" id="card-to-series">
+          <div class="icon">🍿</div>
+          <h2>SÉRIES</h2>
+          <span id="cnt-series">0 títulos</span>
+        </div>
+        <div class="nav-card fav" id="card-to-fav">
+          <div class="icon">⭐</div>
+          <h2>FAVORITOS</h2>
+          <span>Seus canais</span>
+        </div>
+        <div class="nav-card add" id="card-to-add">
+          <div class="icon">➕</div>
+          <h2>ADICIONAR</h2>
+          <span>Nova Lista M3U</span>
+        </div>
+        <div class="nav-card live" id="card-to-demo">
+          <div class="icon">✨</div>
+          <h2>DEMONSTRAÇÃO</h2>
+          <span>Canais Públicos</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- TELA 2: ADICIONAR LISTA -->
+    <section id="screen-add" class="screen">
+      <div class="form-box">
+        <h3 style="border-bottom: 1px solid var(--border); padding-bottom: 10px; color: #60a5fa;">Adicionar Lista M3U / M3U8</h3>
+
+        <div class="form-group">
+          <label>1. Digite a URL da lista:</label>
+          <input type="text" id="url-input" class="input-field" placeholder="http://servidor.com/get.php?username=...">
+          <button class="btn btn-primary" id="btn-submit-url" style="margin-top: 6px;">Baixar Lista por URL</button>
+        </div>
+
+        <div style="text-align: center; color: var(--text-muted); font-size: 0.8rem;">— OU —</div>
+
+        <div class="form-group">
+          <label>2. Escolha o arquivo .m3u do aparelho:</label>
+          <input type="file" id="file-input" class="input-field" accept=".m3u,.m3u8,.txt">
+        </div>
+
+        <div style="text-align: center; color: var(--text-muted); font-size: 0.8rem;">— OU —</div>
+
+        <div class="form-group">
+          <label>3. Cole o texto da lista aqui:</label>
+          <textarea id="text-input" class="input-field" placeholder="#EXTM3U&#10;#EXTINF:-1,Nome Canal&#10;http://..."></textarea>
+          <button class="btn btn-success" id="btn-submit-text" style="margin-top: 6px;">Carregar Texto Colado</button>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+          <button class="btn" id="btn-cancel-add">Voltar ao Início</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TELA 3: TV AO VIVO -->
+    <section id="screen-live" class="screen">
+      <div class="live-layout">
+        <div class="channel-column">
+          <div class="column-title">Lista de Canais</div>
+          <ul class="channel-list" id="channel-container"></ul>
+        </div>
+        <div class="player-column">
+          <div class="video-container">
+            <video id="player" controls autoplay playsinline></video>
+          </div>
+          <div class="video-info">
+            <div>
+              <h4 id="current-name" style="font-size: 0.95rem;">Selecione um canal</h4>
+              <span id="current-group" style="font-size: 0.75rem; color: var(--text-muted);">TvTech Player</span>
+            </div>
+            <button class="btn" id="btn-fullscreen">⛶ Tela Cheia</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TELA 4: FILMES -->
+    <section id="screen-vod" class="screen">
+      <h3 style="color: #60a5fa;">Filmes On Demand</h3>
+      <div class="grid-container" id="vod-container"></div>
+    </section>
+
+    <!-- TELA 5: SÉRIES -->
+    <section id="screen-series" class="screen">
+      <h3 style="color: #60a5fa;">Séries</h3>
+      <div class="grid-container" id="series-container"></div>
+    </section>
+  </main>
+
+  <script>
+    (function() {
+      const s = document.createElement('script');
+      s.src = "https://cdn.jsdelivr.net/npm/hls.js@latest";
+      s.onload = () => { window.hlsReady = true; };
+      document.head.appendChild(s);
+    })();
+  </script>
+
+  <script>
+    const state = { channels: [], vod: [], series: [] };
+    let hlsInstance = null;
+    const player = document.getElementById('player');
+
+    function goToScreen(screenName) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      const target = document.getElementById('screen-' + screenName);
+      if (target) target.classList.add('active');
+      if (screenName !== 'live' && !player.paused) player.pause();
+    }
+
+    function parseM3U(content) {
+      const lines = content.split(/\r?\n/);
+      const items = [];
+      let temp = null;
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line.startsWith('#EXTINF:')) {
+          temp = {};
+          const comma = line.indexOf(',');
+          temp.name = comma !== -1 ? line.substring(comma + 1).trim() : 'Canal Sem Nome';
+          const group = line.match(/group-title="([^"]+)"/i);
+          temp.group = group ? group[1] : 'Geral';
+          const logo = line.match(/tvg-logo="([^"]+)"/i);
+          temp.logo = logo ? logo[1] : '';
+        } else if (line && !line.startsWith('#')) {
+          if (temp) {
+            temp.url = line;
+            items.push(temp);
+            temp = null;
+          }
+        }
+      }
+      return items;
+    }
+
+    function applyData(rawText) {
+      if (!rawText || rawText.trim().length === 0) {
+        alert("O conteúdo da lista está vazio.");
+        return;
+      }
+      const items = parseM3U(rawText);
+      if (items.length === 0) {
+        alert("Nenhum canal válido foi localizado no formato M3U.");
+        return;
+      }
+
+      state.channels = [];
+      state.vod = [];
+      state.series = [];
+
+      items.forEach(it => {
+        const g = (it.group || "").toLowerCase();
+        const n = (it.name || "").toLowerCase();
+        if (g.includes('filme') || g.includes('movie') || it.url.endsWith('.mp4') || it.url.endsWith('.mkv')) {
+          state.vod.push(it);
+        } else if (g.includes('serie') || g.includes('série') || n.match(/s\d+\s?e\d+/i)) {
+          state.series.push(it);
+        } else {
+          state.channels.push(it);
+        }
+      });
+
+      document.getElementById('cnt-live').innerText = `${state.channels.length} canais`;
+      document.getElementById('cnt-vod').innerText = `${state.vod.length} títulos`;
+      document.getElementById('cnt-series').innerText = `${state.series.length} títulos`;
+
+      renderChannels();
+      renderVod();
+      renderSeries();
+
+      try {
+        if (rawText.length < 3000000) localStorage.setItem('iptv_cache', rawText);
+      } catch (e) {}
+
+      alert(`Sucesso! ${items.length} itens processados.`);
+      goToScreen('home');
+    }
+
+    function renderChannels() {
+      const box = document.getElementById('channel-container');
+      box.innerHTML = '';
+      state.channels.forEach((ch) => {
+        const li = document.createElement('li');
+        li.className = 'channel-item';
+        li.innerHTML = `<span>▶</span> <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${ch.name}</span>`;
+        li.onclick = () => {
+          document.querySelectorAll('.channel-item').forEach(el => el.classList.remove('active'));
+          li.classList.add('active');
+          playStream(ch);
+        };
+        box.appendChild(li);
+      });
+    }
+
+    function renderVod() {
+      const box = document.getElementById('vod-container');
+      box.innerHTML = '';
+      state.vod.slice(0, 80).forEach(m => {
+        const card = document.createElement('div');
+        card.className = 'media-card';
+        card.innerHTML = `<img src="${m.logo || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400'}" onerror="this.src='https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400'" /><div class="media-card-title">${m.name}</div>`;
+        card.onclick = () => { goToScreen('live'); playStream(m); };
+        box.appendChild(card);
+      });
+    }
+
+    function renderSeries() {
+      const box = document.getElementById('series-container');
+      box.innerHTML = '';
+      state.series.slice(0, 80).forEach(s => {
+        const card = document.createElement('div');
+        card.className = 'media-card';
+        card.innerHTML = `<img src="${s.logo || 'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=400'}" onerror="this.src='https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=400'" /><div class="media-card-title">${s.name}</div>`;
+        card.onclick = () => { goToScreen('live'); playStream(s); };
+        box.appendChild(card);
+      });
+    }
+
+    function playStream(item) {
+      document.getElementById('current-name').innerText = item.name;
+      document.getElementById('current-group').innerText = item.group || "TvTech Player";
+      if (window.Hls && Hls.isSupported() && (item.url.includes('.m3u8') || !item.url.endsWith('.mp4'))) {
+        if (hlsInstance) hlsInstance.destroy();
+        hlsInstance = new Hls({ enableWorker: true });
+        hlsInstance.loadSource(item.url);
+        hlsInstance.attachMedia(player);
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => player.play().catch(() => {}));
+      } else {
+        player.src = item.url;
+        player.play().catch(() => {});
+      }
+    }
+
+    function loadDemo() {
+      const demo = `#EXTM3U
+#EXTINF:-1 tvg-logo="https://upload.wikimedia.org/wikipedia/commons/e/e5/NASA_logo.svg" group-title="Notícias",NASA TV HD
+https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8
+#EXTINF:-1 tvg-logo="https://upload.wikimedia.org/wikipedia/commons/b/b2/Euronews_logo_2016.svg" group-title="Notícias",Euronews Português
+https://euronews-euronewsportuguese-1-pt.samsung.wurl.tv/playlist.m3u8
+#EXTINF:-1 tvg-logo="https://peach.blender.org/wp-content/uploads/bbb-splash.png" group-title="Filmes",Big Buck Bunny (Filme)
+https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8`;
+      applyData(demo);
+    }
+
+    function attachListeners() {
+      document.getElementById('btn-top-home').onclick = () => goToScreen('home');
+      document.getElementById('btn-top-add').onclick = () => goToScreen('add');
+
+      document.getElementById('card-to-live').onclick = () => goToScreen('live');
+      docum
